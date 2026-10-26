@@ -147,7 +147,57 @@ if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
     else { claude mcp add --scope user --transport http context7 https://mcp.context7.com/mcp }
 }
 
-Step "5. Claude 메모리 복원 (본인 PC끼리 옮길 때만, ..\.personal\memory 가 있을 때)"
+Step "5. 보안·편의 설정 (비밀 파일 차단, git 자동 제외, 상태 표시줄)"
+$claudeDir = Join-Path $HOME ".claude"
+New-Item -ItemType Directory -Force $claudeDir | Out-Null
+$settingsPath = Join-Path $claudeDir "settings.json"
+$settings = if (Test-Path $settingsPath) { Get-Content $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { [pscustomobject]@{} }
+Copy-Item $settingsPath "$settingsPath.setup-backup" -ErrorAction SilentlyContinue
+function EnsureProp($obj, $name, $value) { if (-not ($obj.PSObject.Properties.Name -contains $name)) { $obj | Add-Member -NotePropertyName $name -NotePropertyValue $value } }
+EnsureProp $settings "permissions" ([pscustomobject]@{})
+EnsureProp $settings.permissions "deny" @()
+EnsureProp $settings.permissions "allow" @()
+# 비밀 파일은 Claude 의 파일 읽기 도구로 열지 못하게 (//** = 모든 드라이브의 모든 폴더)
+$deny = "//**/.env", "//**/.env.local", "//**/.env.*.local", "//**/.env.development", "//**/.env.production",
+    "//**/.env.staging", "//**/.env.test", "//**/*.pem", "//**/*.key", "//**/*.pfx", "//**/*.p12", "//**/id_rsa",
+    "//**/id_ed25519", "~/.ssh/**", "~/.aws/credentials", "//**/credentials.json", "//**/service-account*.json" |
+    ForEach-Object { "Read($_)" }
+# 문서 조회만 하는 Context7 도구는 매번 묻지 않게
+$allow = "mcp__context7__resolve-library-id", "mcp__context7__query-docs"
+$settings.permissions.deny = @($settings.permissions.deny + $deny | Select-Object -Unique)
+$settings.permissions.allow = @($settings.permissions.allow + $allow | Select-Object -Unique)
+$statusScript = Join-Path $claudeDir "statusline.ps1"
+if (-not (Test-Path $statusScript)) { Copy-Item (Join-Path $PSScriptRoot "statusline.ps1") $statusScript }
+if (-not $settings.statusLine) {
+    EnsureProp $settings "statusLine" ([pscustomobject]@{ type = "command"; command = "powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude/statusline.ps1" })
+    Write-Host "  [설정] 상태 표시줄"
+} else { Write-Host "  [유지] 기존 상태 표시줄" }
+[System.IO.File]::WriteAllText($settingsPath, ($settings | ConvertTo-Json -Depth 20), (New-Object System.Text.UTF8Encoding($false)))
+# PowerShell 5.1 의 JSON 들여쓰기가 읽기 불편해서 Node 가 있으면 2칸 들여쓰기로 다시 정렬
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    node -e "const f=process.argv[1],fs=require('fs');fs.writeFileSync(f,JSON.stringify(JSON.parse(fs.readFileSync(f,'utf8')),null,2)+'\n')" $settingsPath
+}
+Write-Host "  [설정] 비밀 파일 읽기 차단 $($deny.Count)개, 자동 허용 $($allow.Count)개 (백업: settings.json.setup-backup)"
+
+# 셸 명령으로 읽는 것까지 막도록 Claude 전역 지침에 규칙 추가
+$globalMd = Join-Path $claudeDir "CLAUDE.md"
+if (-not ((Get-Content $globalMd -Raw -ErrorAction SilentlyContinue) -match '# Secrets')) {
+    Add-Content $globalMd "`n# Secrets`n`nNever read or print the contents of secret files (``.env*`` except ``.env.example``, ``*.pem``, ``*.key``, SSH keys, credentials JSON) by any means, including shell commands like ``cat``, ``type``, ``Get-Content``, ``grep``. To check which variables exist, read ``.env.example`` or ask the user. Never commit these files." -Encoding UTF8
+    Write-Host "  [설정] Claude 전역 지침에 비밀 파일 규칙"
+}
+
+# 모든 git 저장소에서 비밀 파일 자동 제외
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    if (git config --global core.excludesFile) { Write-Host "  [유지] 기존 전역 gitignore: $(git config --global core.excludesFile)" }
+    else {
+        $gi = Join-Path $HOME ".gitignore_global"
+        if (-not (Test-Path $gi)) { Copy-Item (Join-Path $PSScriptRoot "gitignore_global") $gi }
+        git config --global core.excludesFile "~/.gitignore_global"
+        Write-Host "  [설정] 전역 gitignore: ~/.gitignore_global"
+    }
+}
+
+Step "6. Claude 메모리 복원 (본인 PC끼리 옮길 때만, ..\.personal\memory 가 있을 때)"
 if (Test-Path $memoryBackup) {
     New-Item -ItemType Directory -Force $memoryDir | Out-Null
     foreach ($f in Get-ChildItem "$memoryBackup\*.md") {

@@ -1,0 +1,18 @@
+# Global git ignore: applies to every repository on this PC (git config core.excludesFile)
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+id_rsa
+id_ed25519
+credentials.json
+service-account*.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini

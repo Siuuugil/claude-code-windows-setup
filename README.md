@@ -20,6 +20,9 @@
 | | watch 플러그인 | 영상 보고 답하기 (yt-dlp·ffmpeg 는 별도) |
 | | rtk 훅 | Claude 가 실행한 Bash 명령 출력 자동 압축 |
 | | Context7 MCP | 라이브러리 최신 공식 문서 조회 |
+| | 상태 표시줄 | 터미널 하단에 모델 · 컨텍스트 사용량 · 세션 비용 · 5시간 한도 · Ponytail 단계 표시 |
+| 보안 | 비밀 파일 읽기 차단 | `.env`, `*.pem`, `*.key`, SSH 키 등을 Claude 가 읽지 못하게 (설정 + 전역 지침) |
+| | 전역 gitignore | 모든 git 저장소에서 `.env` 등 비밀 파일 자동 제외 (`.env.example` 은 유지) |
 
 전부 모든 프로젝트에 공통 적용된다 (사용자 단위 설정).
 
@@ -50,7 +53,8 @@
 
 질문 없이 전부 업데이트하려면 터미널에서 `setup.cmd -UpdateAll`.
 
-기존 설정도 보존된다: git 이름·이메일은 비어 있을 때만 묻고, Claude 설정은 기존 파일에 합친다 (`~/.claude/settings.json.bak` 백업).
+기존 설정도 보존된다: git 이름·이메일은 비어 있을 때만 묻고, Claude 설정은 기존 파일에 합친다 (`~/.claude/settings.json.setup-backup` 백업).
+이미 쓰던 상태 표시줄이나 전역 gitignore 가 있으면 그대로 둔다.
 
 ## 3. 마지막으로 할 것
 
