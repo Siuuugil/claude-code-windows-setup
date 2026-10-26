@@ -49,7 +49,7 @@ function HasCommand($name) {
     if ((Get-Command py -ErrorAction SilentlyContinue)) { return $true }
     return ((& python --version 2>&1 | Out-String) -match 'Python \d')
 }
-# 이 환경이 동작하는 데 필요한 최소 버전 (Ponytail 훅: Node, watch 플러그인: Python 3.10+)
+# 최소 버전 (Node: Ponytail 훅 실행, Python: 3.10 미만은 보안 업데이트가 끝난 버전)
 $minVersion = @{ node = [version]"18.0"; python = [version]"3.10" }
 # 최소 버전 미달인데 winget 으로 관리되지 않는 경우 (nvm, Store, 다른 버전 등) 안내
 $manualHelp = @{
@@ -130,7 +130,7 @@ if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
     # Ponytail 저장소가 커서 기본 2분 제한으로는 clone 이 끊김
     $env:CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS = "540000"
     $installed = claude plugin list 2>&1 | Out-String
-    $plugins = @{ "ponytail@ponytail" = "DietrichGebert/ponytail"; "watch@claude-video" = "bradautomates/claude-video" }
+    $plugins = @{ "ponytail@ponytail" = "DietrichGebert/ponytail" }
     foreach ($p in $plugins.Keys) {
         if ($installed -match [regex]::Escape($p)) { Write-Host "  [있음] $p"; continue }
         claude plugin marketplace add $plugins[$p]
