@@ -1,11 +1,10 @@
 ﻿<#
   새 PC 개발 환경 세팅. 여러 번 실행해도 안전하다 (이미 된 단계는 건너뜀).
 
-  사용 (Windows 기본 실행 정책이 .ps1 을 막으므로 Bypass 로 실행):
-    powershell -ExecutionPolicy Bypass -File .\setup.ps1              # 전체 세팅
-  아래 옵션도 같은 방식으로 붙인다:
-    .\setup.ps1 -UpdateAll   # 업데이트 질문에 전부 '예'
-    .\setup.ps1 -SaveMemory  # 이 PC의 Claude 메모리를 ..\.personal\memory 로 백업 (본인 PC끼리 옮길 때)
+  사용 (setup.cmd 가 실행 정책을 바꾸지 않고 이 스크립트를 실행한다):
+    setup.cmd               # 전체 세팅 (더블클릭)
+    setup.cmd -UpdateAll    # 업데이트 질문에 전부 '예'
+    setup.cmd -SaveMemory   # 이 PC의 Claude 메모리를 ..\.personal\memory 로 백업 (본인 PC끼리 옮길 때)
 #>
 param([switch]$SaveMemory, [switch]$UpdateAll)
 
@@ -19,6 +18,7 @@ function Step($msg) { Write-Host "`n=== $msg" -ForegroundColor Cyan }
 function RefreshPath { $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User") }
 
 if ($SaveMemory) {
+    if (-not (Test-Path "$memoryDir\*.md")) { Write-Warning "백업할 Claude 메모리 없음: $memoryDir"; return }
     New-Item -ItemType Directory -Force $memoryBackup | Out-Null
     Copy-Item "$memoryDir\*.md" $memoryBackup -Force -ErrorAction Stop
     Write-Host "메모리 백업 완료: $memoryBackup"
@@ -45,9 +45,9 @@ function HasCommand($name) {
     $cmd = Get-Command $name -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $cmd) { return $false }
     if ($name -ne "python") { return $true }
-    # WindowsApps 의 python 은 Store 로 보내는 가짜 바로가기일 수 있어서 py 런처가 있을 때만 설치된 것으로 본다
-    if ($cmd.Source -like "*\WindowsApps\*") { return [bool](Get-Command py -ErrorAction SilentlyContinue) }
-    return $true
+    # WindowsApps 의 python 은 Store 로 보내는 가짜 바로가기일 수도, 진짜 Store 판 Python 일 수도 있어서 실행해 보고 판단
+    if ((Get-Command py -ErrorAction SilentlyContinue)) { return $true }
+    return ((& python --version 2>&1 | Out-String) -match 'Python \d')
 }
 # 이 환경이 동작하는 데 필요한 최소 버전 (Ponytail 훅: Node, watch 플러그인: Python 3.10+)
 $minVersion = @{ node = [version]"18.0"; python = [version]"3.10" }
