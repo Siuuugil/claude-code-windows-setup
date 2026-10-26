@@ -1,6 +1,6 @@
 # Claude Code 개발 환경 한 번에 세팅 (Windows)
 
-이 `setup` 폴더만 있으면 누구나 자기 PC에 같은 개발 환경을 만들 수 있다.
+이 폴더(저장소)만 있으면 누구나 자기 PC에 같은 개발 환경을 만들 수 있다.
 계정 정보는 들어 있지 않다. git 이름·이메일과 각종 로그인은 실행하는 사람이 자기 것으로 한다.
 
 ## 설치되는 것
@@ -23,7 +23,8 @@
 
 ## 1. 먼저 할 것
 
-1. 이 `setup` 폴더를 PC 아무 곳에 둔다 (압축이면 풀어서).
+1. 이 저장소를 받는다: GitHub 페이지의 **Code → Download ZIP** 후 압축 풀기, 또는
+   `git clone https://github.com/Siuuugil/claude-code-windows-setup.git`
 2. **Claude 데스크톱 앱** 설치 후 본인 Claude 계정으로 로그인: https://claude.ai/download
 
 ## 2. 실행
@@ -63,7 +64,7 @@
 
 ## 다른 사람에게 줄 때
 
-- **`setup` 폴더만** 준다 (압축해서 전달하거나 GitHub 저장소로 공유). 이 폴더에는 개인정보가 없다.
+- 저장소 링크를 주면 된다: https://github.com/Siuuugil/claude-code-windows-setup (개인정보 없음)
 - 상위 폴더의 `.personal\` 은 만든 사람의 개인 메모리 백업이라 주지 않는다.
 
 ## 본인 PC끼리 옮길 때 (선택)
